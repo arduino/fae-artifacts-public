@@ -1,0 +1,35 @@
+networks:
+  sensorfusion:
+
+services:
+  cad:
+    image: arduino/python-sf:latest
+    build: .
+    restart: unless-stopped
+    depends_on:
+    - inference
+    tty: true
+    environment:
+      M4_PROXY_HOST: m4proxy
+      M4_PROXY_PORT: 5001
+    extra_hosts:
+    - "m4proxy:host-gateway"
+    networks:
+      sensorfusion:
+        aliases:
+        - collect-and-dispatch
+    command: ["inference", "1337"]
+
+  inference:
+    image: public.ecr.aws/g7a8t7v6/inference-container:d314d2095eb0d3e5c3286f085c452b6e324c7416
+    restart: unless-stopped
+    ports:
+    - 1337:1337
+    networks:
+      sensorfusion:
+        aliases:
+        - ei-inference
+    command: [
+      "--api-key", "ei_a85250d6bb132f1584ea434092f9435ff66975f3ec9af9ef9df4d66fcab30eb4",
+      "--run-http-server", "1337",
+      "--force-target", "runner-linux-aarch64"]
